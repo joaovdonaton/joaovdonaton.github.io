@@ -4,6 +4,8 @@ body{
     background-color: rgb(239, 239, 239);
 }
 
+/* ----------NAVBAR and FOOTER ---------- */
+
 #navbar{
     background-color: white;
     display: grid;
@@ -11,7 +13,6 @@ body{
     font-size: 2rem;
     padding: 1rem;
     margin: 0;
-    border-bottom: black solid 1px;
 }
 
 .navbar-container{
@@ -55,11 +56,79 @@ body{
     border-bottom: 0.2rem solid black;
 }
 
+#footer{
+    background-color: #ffffff;
+    height: 15vh;
+}
+
+/* ---------- PAGES ---------- */
+
 .page-container{
     padding: 1rem;
+    margin: 1rem;
     display: none;
 }
 
 .page-container-current{
     display: block;
+    height: 100vh;
+}
+
+/* ---------- MAIN PAGE ----------*/
+
+#main-page-container{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.main-page-panel{
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: center;
+    gap: 10px;
+}
+
+.main-page-panel *{
+    margin: 0;
+}
+
+.description{
+    margin-top: 4rem;
+    font-size: 1rem;
+    width: 40%;
+    color: #979797;
+}
+
+#play-name{
+    color: blue;
+}
+
+#play-name:hover {
+    border-bottom: purple;
+    color: purple;
+    cursor: pointer;
+}
+
+#icons-container{
+    display: flex;
+    width: 40%;
+    flex-direction: row;
+    gap: 5%;
+}
+
+.link-icon{
+    display: inline-block;
+    width: 15%;
+    height: auto;
+}
+
+#icons-container a{
+    display: contents; /* necessary for width to be correct*/
+}
+
+
+
+@media (max-width: 600px) {
+
 }

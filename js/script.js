@@ -15,8 +15,14 @@ for(let item of navbarItems){
         let pageId = e.currentTarget.id;
         pageId = pageId.replace("-item", "-page");
 
-        console.log(pageId)
-
         document.getElementById(pageId).classList.add("page-container-current");
     })
 }
+
+
+// add listener to name pronounciation text
+let clickHere = document.getElementById("play-name")
+let pronunciationAudio = new Audio("./assets/name.mp3")
+clickHere.addEventListener("click", (e) => {
+    pronunciationAudio.play()
+})
