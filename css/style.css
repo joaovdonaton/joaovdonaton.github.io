@@ -1,0 +1,65 @@
+body{
+    margin: 0;
+    font-family: 'Roboto', serif;
+    background-color: rgb(239, 239, 239);
+}
+
+#navbar{
+    background-color: white;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    font-size: 2rem;
+    padding: 1rem;
+    margin: 0;
+    border-bottom: black solid 1px;
+}
+
+.navbar-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#my-name{
+    font-weight: bold;
+}
+
+@media (max-width: 600px) {
+    #navbar {
+        display: flex;
+        flex-flow: column nowrap;
+    }
+
+    .navbar-container{
+        flex-direction: column;
+    }
+
+    #my-name{
+        border-bottom: 0.2rem solid black;
+    }
+}
+
+.navbar-item{
+    padding: 0.2rem 1rem;
+    margin: auto 1rem;
+    border-bottom: 0.2rem solid transparent; /* need this so navbar doesn't shift slightly on hover because of border*/
+}
+
+.navbar-item:hover{
+    border-bottom: 0.2rem solid black;
+    background-color: rgb(239, 239, 239);
+    cursor: pointer;
+}
+
+.navbar-item-current{
+    border-bottom: 0.2rem solid black;
+}
+
+.page-container{
+    padding: 1rem;
+    display: none;
+}
+
+.page-container-current{
+    display: block;
+}
