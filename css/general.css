@@ -81,7 +81,7 @@ body{
 
 .page-container-current{
     display: block;
-    height: 100vh;
+    height: auto;
 }
 
 @media (max-width: 600px) {

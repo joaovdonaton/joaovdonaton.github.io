@@ -4,10 +4,58 @@
     display: flex;
     flex-flow: row;
     flex-wrap: wrap;
-    justify-content: space-around;
-    align-items: flex-start;
+    justify-content: center;
+    gap: 3rem;
 }
 
 .project-item{
-
+    width: 35%;
+    height: 50%;
+    padding: 0.8rem;
+    background-color: lightgray;
+    box-shadow: 1rem 1rem 0.5rem;
+    transition: 0.5s;
 }
+
+.project-item img{
+    width: 100%;
+    height: auto;
+}
+
+.project-item:hover{
+    transform: scale(1.05);
+}
+
+.project-item h1{
+    margin-bottom: 0;
+}
+
+.project-item h3{
+    margin-top: 0;
+}
+
+/* prevent the ugly hypertext highlight from taking over my text*/
+.project-item a{
+    text-decoration: none;
+    color: inherit;
+}
+
+@media (max-width: 600px){
+    #projects-page-container{
+        flex-direction: column;
+        flex-wrap: nowrap;
+    }
+
+    .project-item{
+        width: 80%;
+        margin: auto auto;
+    }
+}
+
+/*.project-image-container{*/
+/*    background-color: #c5c5c5;*/
+/*    height: 50%;*/
+/*    display: flex;*/
+/*    justify-content: center;*/
+/*    align-items: center;*/
+/*}*/
