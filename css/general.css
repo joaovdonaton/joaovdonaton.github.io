@@ -57,8 +57,18 @@ body{
 }
 
 #footer{
+    display: flex;
+    align-items: center;
+    flex-direction: column;
     background-color: #ffffff;
     height: 15vh;
+    padding: 1rem;
+    color: #979797;
+}
+
+#footer div{
+    display: inline;
+    margin-bottom: 0.75rem;
 }
 
 /* ---------- PAGES ---------- */
@@ -74,61 +84,8 @@ body{
     height: 100vh;
 }
 
-/* ---------- MAIN PAGE ----------*/
-
-#main-page-container{
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-}
-
-.main-page-panel{
-    display: flex;
-    flex-direction: column;
-    justify-content: start;
-    align-items: center;
-    gap: 10px;
-}
-
-.main-page-panel *{
-    margin: 0;
-}
-
-.description{
-    margin-top: 4rem;
-    font-size: 1rem;
-    width: 40%;
-    color: #979797;
-}
-
-#play-name{
-    color: blue;
-}
-
-#play-name:hover {
-    border-bottom: purple;
-    color: purple;
-    cursor: pointer;
-}
-
-#icons-container{
-    display: flex;
-    width: 40%;
-    flex-direction: row;
-    gap: 5%;
-}
-
-.link-icon{
-    display: inline-block;
-    width: 15%;
-    height: auto;
-}
-
-#icons-container a{
-    display: contents; /* necessary for width to be correct*/
-}
-
-
-
 @media (max-width: 600px) {
-
+    .page-container-current{
+        height: auto;
+    }
 }

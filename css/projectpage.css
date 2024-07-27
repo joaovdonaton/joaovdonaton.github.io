@@ -1,0 +1,13 @@
+/* ---------- PROJECT PAGE ----------*/
+
+#projects-page-container{
+    display: flex;
+    flex-flow: row;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: flex-start;
+}
+
+.project-item{
+
+}
