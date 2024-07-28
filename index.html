@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="./css/general.css">
     <link rel="stylesheet" href="./css/mainpage.css">
     <link rel="stylesheet" href="./css/projectpage.css">
+    <link rel="stylesheet" href="css/contactpage.css">
 </head>
 <body>
     <nav id="navbar">
@@ -19,7 +20,7 @@
         <div class="navbar-container">
             <a class="navbar-item navbar-item-current" id="main-item">Main</a>
             <a class="navbar-item" id="projects-item">Projects</a>
-            <a class="navbar-item" id="contact-item">Contact</a>
+            <a class="navbar-item" id="contact-item">Contact/About</a>
         </div>
     </nav>
 
@@ -32,14 +33,14 @@
             <div class="main-page-panel">
                 <h1 id="name-header">Hey, I'm João!</h1>
                 <p class="description"> I'm a Computer Science student at Kent State University in Ohio. I love Math and Programming!
-                    You'll find my projects, contact information and other general information on here! </p>
+                    You'll find my projects, contact information and other general stuff on here! </p>
                 <p class="description" style="margin-top: 20px"> Click <a id="play-name">here</a> to hear my name's pronunciation! but I'm fine with being called Joe.</p>
 
                 <div id="icons-container" style="margin-top: 20px">
                     <a href="https://github.com/joaovdonaton"><img src="assets/github.png" alt="github logo" class="link-icon"></a>
                     <a href="https://www.linkedin.com/in/joao-donaton/"><img src="assets/linkedin.png" alt="linkedin logo" class="link-icon"></a>
                 </div>
-                <img src="assets/kent%20state%20logo.svg" alt="ksu" style="margin-top: 2rem">
+                <img src="assets/kent%20state%20logo.svg" alt="ksu" style="margin-top: 2rem; width: 30%; height: auto">
             </div>
             <div class="main-page-panel">
                 <img src="assets/me.png" alt="me" id="self-image">
@@ -52,6 +53,22 @@
 
     <div class="page-container" id="projects-page">
         <div id="projects-page-container">
+<!--            <div class="project-item">-->
+<!--                <a href="https://github.com/joaovdonaton/pet-api-spring">-->
+<!--                    <img src="assets/projects/petapi.png" alt="">-->
+<!--                    <h1>Babel Pages (2024 - WIP)</h1>-->
+<!--                    <h3><em>Java, Spring Boot, MySQL, OpenAPI, Unit Testing, Relational Database</em></h3>-->
+<!--                    <p>-->
+<!--                        Fully fledged REST api written in Spring Boot for a prototype pet adoption web app. Developed as my final project for-->
+<!--                        in person software developer training at Latin-American bank Bradesco. <b>Features include:</b>-->
+<!--                    </p>-->
+<!--                    <ul>-->
+<!--                        <li>Authentication and Authorization using JWT tokens</li>-->
+<!--                        <li>Pet matching system based on preference</li>-->
+<!--                        <li>Location data for matching system (Google Maps API)</li>-->
+<!--                    </ul>-->
+<!--                </a>-->
+<!--            </div>-->
             <div class="project-item">
                 <a href="https://github.com/joaovdonaton/pet-api-spring">
                     <img src="assets/projects/petapi.png" alt="">
@@ -59,7 +76,7 @@
                     <h3><em>Java, Spring Boot, JPA, OpenAPI, Unit Testing, Relational Database</em></h3>
                     <p>
                         Fully fledged REST api written in Spring Boot for a prototype pet adoption web app. Developed as my final project for
-                    in person software developer training at Latin-American bank Bradesco. <b>Features include:</b>
+                        in person software developer training at Latin-American bank Bradesco. <b>Features include:</b>
                     </p>
                     <ul>
                         <li>Authentication and Authorization using JWT tokens</li>
@@ -68,6 +85,21 @@
                     </ul>
                 </a>
             </div>
+<!--            <div class="project-item">-->
+<!--                <a href="https://github.com/joaovdonaton/pet-api-spring">-->
+<!--                    <img src="assets/projects/petapi.png" alt="">-->
+<!--                    <h1>Pet Adoption Backend (2023)</h1>-->
+<!--                    <h3><em>Javascript, NodeJS, Express, PrismaORM</em></h3>-->
+<!--                    <p>-->
+<!--                        Initial Version of the project with the same name. Written in Javascript using the Express framework <b>Features include:</b>-->
+<!--                    </p>-->
+<!--                    <ul>-->
+<!--                        <li>Authentication and Authorization using JWT tokens</li>-->
+<!--                        <li>Pet matching system based on preference</li>-->
+<!--                        <li>Location data for matching system (Google Maps API)</li>-->
+<!--                    </ul>-->
+<!--                </a>-->
+<!--            </div>-->
             <div class="project-item">
                 <a href="https://github.com/joaovdonaton/jogodavelha">
                     <img src="assets/projects/tictactoe.gif" alt="">
@@ -124,7 +156,37 @@
     <!-- contact page -->
 
     <div class="page-container" id="contact-page">
-        contact
+        <div id="contact-page-container">
+            <div class="contact-page-panel">
+                <h1>About me</h1>
+                <p class="about-description">
+                    I'm an international student at Kent State University (KSU) studying Computer Science with a minor in Applied Math.
+                    I've also received a degree in Liberal Arts from KSU as part of a two-year program in partnership with the Brazilian university PUC-PR (Pontifícia Universidade Católica do Paraná).
+                </p>
+                <p class="about-description">
+                    My interest in Computer Science began in 2018, when I found out about C# programming through the Unity Game engine. From that, I played around with
+                    different tools and languages before deciding that I actually wanted to learn Java thoroughly. I bought a book on Java 8 for beginners, and I got to learn
+                    about basic data structures, Object-oriented programming and the Swing API for developing GUIs. I never really stopped learning since then, and have
+                    used languages such as Python, C++, HTML/CSS, Javascript, and a range of different frameworks and APIs.
+                </p>
+                <p class="about-description">
+                    While studying for my Liberal Arts degree in Brazil, I had the opportunity of being part of a training and recruitment program for
+                    one of Latin America's largest banks, Bradesco. I took part in 9 months of formal in-person training to be a back-end developer at the bank.
+                    We used Java (Spring Framework) and Javascript (Node.JS with Express framework) to build REST APIs. Being a part of this was probably the best
+                    educational experience I have had until now. I met amazingly talented professors and incredibly hard-working people. I got to learn about
+                    proper development patterns and standards, unit testing and documentation, as well as authentication, authorization and many other concepts.
+                </p>
+                <p class="about-description">
+                    Other than that, my interests include reading, playing video games, cooking and metal music.
+                </p>
+            </div>
+            <div class="contact-page-panel">
+                <h1>Contact</h1>
+                <p>You can reach out to me on <a href="https://www.linkedin.com/in/joao-donaton/">LinkedIn</a></p>
+                <p>I'm also on Discord: <b>joaodonaton</b></p>
+                <p>My KSU email is: <b>jmacambi@kent.edu</b></p>
+            </div>
+        </div>
     </div>
 
     <!-- FOOTER AND JS -->

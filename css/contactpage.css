@@ -1,0 +1,24 @@
+/* ---------- ABOUT PAGE ----------*/
+
+#contact-page-container{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.contact-page-panel{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.about-description{
+    width: 80%;
+}
+
+@media (max-width: 600px) {
+    #contact-page-container{
+        display: grid;
+        grid-template-rows: 1fr 1fr;
+        grid-template-columns: 1fr;
+    }
+}
