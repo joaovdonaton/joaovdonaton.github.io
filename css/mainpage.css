@@ -8,7 +8,7 @@
 .main-page-panel{
     display: flex;
     flex-direction: column;
-    justify-content: start;
+    justify-content: center;
     align-items: center;
     gap: 10px;
 }
@@ -18,10 +18,11 @@
 }
 
 .description{
-    margin-top: 4rem;
-    font-size: 1rem;
-    width: 40%;
-    color: #979797;
+    margin-top: 2rem;
+    font-size: 1.25rem;
+    width: 70%;
+    color: #717171;
+    text-align: center;
 }
 
 #name-header{
@@ -56,16 +57,19 @@
     display: contents; /* necessary for width to be correct*/
 }
 
-#self-image{
-
+.self-image{
+    width: 60%;
+    height: auto;
+    border-radius: 2.5rem;
 }
 
-
+#mobile-img{
+    display: none;
+}
 
 @media (max-width: 600px) {
     #main-page-container{
         display: grid;
-        grid-template-rows: 1fr 1fr;
         grid-template-columns: 1fr;
     }
 
@@ -73,9 +77,10 @@
         font-size: 3rem;
     }
 
-    #self-image{
+    .self-image{
         width: 70vw;
         height: auto;
+        margin-top: 2.5rem;
     }
 
     .description{
@@ -84,5 +89,17 @@
 
     .link-icon{
         width: 40%;
+    }
+
+    .main-page-panel{
+        justify-content: start;
+    }
+
+    #desktop-only-panel{
+        display: none;
+    }
+
+    #mobile-img{
+        display: block;
     }
 }
