@@ -1,0 +1,22 @@
+.return-button{
+    font-size: 1.5rem;
+}
+
+.return-button:visited{
+    color: blue;
+}
+
+body{
+    margin: 2rem 10rem;
+    font-family: 'Roboto', serif;
+    background-color: rgb(239, 239, 239);
+}
+
+.blog-content{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    color: #424141;
+    font-size: 1.2rem;
+}

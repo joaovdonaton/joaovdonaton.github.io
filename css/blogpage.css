@@ -1,0 +1,33 @@
+#blog-page-container{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.blog-page-header-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+
+    margin-bottom: 4rem;
+}
+
+.blog-page-post-item{
+    width: 50vw;
+    color: #4e4d4d;
+    margin-bottom: 2rem;
+}
+
+.blog-page-post-item a{
+    font-size: 1.5rem;
+}
+
+.blog-page-post-item a:hover{
+
+}
+
+.blog-page-post-item a:visited{
+    color: blue;
+}
