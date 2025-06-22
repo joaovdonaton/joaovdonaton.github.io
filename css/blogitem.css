@@ -20,3 +20,25 @@ body{
     color: #424141;
     font-size: 1.2rem;
 }
+
+.blog-content > p{
+    width: 100%;
+    text-align: left;
+}
+
+.blog-image-container{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 3rem;
+}
+
+.blog-image{
+    width: 70%;
+    margin-bottom: 0.25rem;
+}
+
+.blog-image-desc{
+    font-size: 1rem;
+    margin-top: 0.25rem;
+}

@@ -39,45 +39,116 @@
         When researching about generative models (for images in particular), you'll probably hear about Generative Adversarial Networks (GANs). I won't get too into it, but
         the neat part about GANs is that they consist two models: a <i>Generator</i> network, which is responsible for generating new samples, and a <i>Discriminator</i> network,
         that is trained to be able to tell if a sample is from the generator (fake) or from the actual dataset (real). This style of adversarial training has its advantages,
-        interestingly, I've seen it used for neural-network based audio compression (See <a href="https://arxiv.org/pdf/2107.03312">Google's SoundStream Codec</a>)
+        interestingly, I've seen it used for neural-network based audio compression (See <a href="#ref1">[1]</a>)
         However, from my understanding, these have largely been replaced by Diffusion models nowadays (e.g StableDiffusion 3, Dall-E, Sora).
 
-        [[[MORE HERE ON diffusion background]]]]
     </p>
 
-    <p>I'll write assuming a certain level of math background, but everything will be explained as it comes up. I'll assume you know things like: vectors, matrices,
-    PDFs, gaussian distributions, calculus (maybe just like the idea of differential equations should be enough)</p>
+    <p>I'll be assuming a certain level of math background, but the main concepts will be explained as they come up. I'll assume familiarity with: vectors, matrices,
+    PDFs, gaussian distributions, calculus (maybe just like the idea of differential equations should be enough), and obviously principles of deep learning. Also,
+        keep in mind there are a few different variations of diffusion denoisers (different learning objective, discrete vs continuous definitions). My implementation
+        uses a continuous-time score-matching approach, and some definitions and equations from <a href="#ref2">[2]</a>. This one
+        is interesting specifically because it uses the differential equations we'll see here to build a sort of framework for different types
+        of diffusion.
+    </p>
 
-    <h3>The basics</h3>
+    <!-- THE FORWARD PROCESS -->
+
+    <h3>The Forward Process</h3>
     <p>
         Now, onto the actual model. Our goal is to create something that can generate coherent images that are similar to the ones in our training dataset. We'll
         assume there exists a probability distribution that describes our train set: $P_{data}$. We represent each of our images' pixel values as a really high dimensional
-        (long) vector $x$, which we can sample from $x \sim P_{data}$. However, a central issue here is that we cannot sample from $P_{data}$, all we have are
-        samples from it. The whole idea behind diffusion is, we start at noise sampled from something like $\mathcal{N}(0, 1)$ (standard gaussian) and somehow
+        vector $x \in \mathbb{R}^d$, where $x \sim P_{data}$. However, a central issue here is that in practice we cannot sample from $P_{data}$. All we have are a limited number of
+        samples from it. The whole idea behind diffusion denoising is, we start at noise sampled from something like $\mathcal{N}(0, I_d)$ (standard gaussian) and somehow
         move towards a sample that is around the high density areas of our $P_{data}$, which should consist of coherent images. We do this by defining a forward
-        noising process, that takes an actual image from our train set, and gradually noises it, until we end up with complete noise. Then, it's possible to
-        derive a reverse process, that takes us from this noise, to a sample.
+        noising process, that takes an actual image from our train set, and gradually noises it, until we end up with complete noise (in a distribution that
+        we can get the probability density for). Then, it's possible (though not simple) to derive a reverse process, that takes us from this noise, to a sample.
     </p>
+
+    <div class="blog-image-container">
+        <img src="images/diffusion/forward.png" alt="diffusion forward process" class="blog-image">
+        <p class="blog-image-desc">Forward process in 6 discrete timesteps.</p>
+    </div>
 
     <p>
         The forward process can be expressed in terms of a Stochastic Differential Equation (SDE):
     </p>
 
-    $$dx = f(x, t)dt + g(t)dw$$
+    $$dx = f(x, t)dt + g(t)dW$$
 
     <p>
         Let's look at this in parts. The $dx$ term just tells us this represents a small change in $x$ (remember $x$ starts at an actual image here).
         This equation tells us how to update $dx$. $dt$ is a small change in time, this change from sample to noise and the reverse is modelled as a function
         of time, I'll use $t=0$ as the initial time of a clean sample, and $t=1$ as the final time, where we have a noised sample. What's interesting here
-        is the $dw$ term, this is what makes this equation <i>Stochastic</i>. It is defined as:
+        is the $dW$ term, this is what makes this equation <i>Stochastic</i>. It is defined as:
     </p>
 
-    $$dw \sim \mathcal{N}(0, dt)$$
+    $$dw \sim \mathcal{N}(0, I_ddt)$$
 
     <p>
-        This is actually called <b>Brownian Motion</b>. In short, random noise pulled from a Gaussian Distribution centered at 0, and scaled by the change in it.
-        This is pretty interesting. It makes it so that this forward process trajectory that $x$ follows as we update it has some randomness to it. If we take a
+        This is actually called <b>Brownian Motion</b>. In short, random noise pulled from a Gaussian Distribution centered at 0, and scaled by the change in time. And it
+        describes how noise is added to $x$ at eat timestep. Fun fact, in physics, brownian motion describes the randomness of the movements of particles suspended under
+        certain conditions. An important property that should be clear is that the changes from $t$ to $t+1$ are completely independent of whatever happened before.
     </p>
+
+    <p>
+        We also have $f(x, t)$, the <i>drift coefficient</i> and $g(t)$ the diffusion coefficient. These are strategically defined to be functions such that we end up
+        at our desired distribution at the end of the forward process. There are two common variations of this, the Variance Exploding (VE) and Variance Preserving (VP) processes.
+        My first attempt a implementing this was actually using VE, but I had trouble getting it to work, so I switched to VP. One thing you'll notice with the implementation
+        of these equations is that it's pretty easy to run into numerical issues (zero division, explosion).
+        For the purposes of this implementation, we'll focus on VP, which is set up in a way that we always end up with $x_1 \sim \mathcal{N}(0,I_d)$
+        (notice the notation, $x_1$ is sample at $t=1$, i.e after forward process). Here's the VP forward:
+    </p>
+
+    $$dx_t = -\frac{1}{2}\beta (t) x_t dt + \sqrt{\beta (t)}dW$$
+
+    <p>
+        Where we pick:
+    </p>
+
+    $$\beta (t) = \beta_{min} + t(\beta_{max} - \beta_{min})$$
+
+    <p>
+        This is called a <b>Noise Schedule</b>, here $\beta(t)$ linearly moves from $\beta_{min}$ to $\beta_{max}$ (I use 0.1 and 20 respectively, same as in
+        <a href="#ref2">[2]</a>). To actually implement the
+        forward process (we use it during training, we'll get there in a bit), we need to discretize it. We want to be able to pick a $t \in [0,1]$,
+        and get a version of the sample $x_t$ with the appropriate amount of noise for that point in the noising. We do this by using an
+        $\bar{\alpha}(t) = exp(-\int_0^t{\beta(t)}dt)$, which in short tells us how much of the original image is retained at time $t$. Basically,
+        for $\beta(t)$ as $t \rightarrow 1$, we'll get a larger accumulation of noise, and have a smaller amount of the actual image remaining. Skipping the
+        derivation, it turns out that the forward SDE has a solution for this:
+    </p>
+
+    $$x_t = x_0\sqrt{\bar{\alpha}(t)}+ \epsilon\sqrt{1 - \bar{\alpha}(t)}, \,\,\, \epsilon \in \mathcal{N}(0, I_d)$$
+
+    <p>
+        Which we can easily implement in PyTorch to get samples $x_t$ at any $t$ stage of noising. If, like me, you were wondering why this
+        preserves variance to $1$. It's pretty simple to show: our data samples are normalized using $\frac{x-mean}{std}$, which means we
+        start at samples with unit variance. And obviously $Var(\epsilon)=1$. So if we want the variance of $x_t$, we can use the fact that both $x_0$ and $\epsilon$ are
+        independent, and use the linearity and properties of variance to get:
+    </p>
+
+    $$Var(x_t) = \bar{\alpha}(t) Var(x_0) + (1-\bar{\alpha}(t)) Var(\epsilon) = \bar{\alpha}(t) + (1-\bar{\alpha}(t))) = 1$$
+
+    <!-- END THE FORWARD PROCESS-->
+
+    <h2>References</h2>
+
+    <ol>
+        <li id="ref1">
+            <p>
+              Zeghidour, N., Luebs, A., Copet, J., Tagliasacchi, M., Grangier, D., &amp; Aharoni, A. (2021).
+              <em>SoundStream: An End-to-End Neural Audio Codec</em>.
+              <a href="https://arxiv.org/pdf/2107.03312" target="_blank">arXiv:2107.03312</a>.
+            </p>
+        </li>
+        <li id="ref2">
+            <p>
+              Song, Y. &amp; Ermon, S. (2020).
+              <em>Score-Based Generative Modeling through Stochastic Differential Equations</em>.
+              <a href="https://arxiv.org/pdf/2011.13456" target="_blank">arXiv:2011.13456</a>.
+            </p>
+        </li>
+    </ol>
 </div>
 
 </body>
