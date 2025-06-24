@@ -30,17 +30,19 @@
     This is an incredible introductory resource on the topic, and the accompanying lecture notes and labs are extremely well put together. The first thing
         that came to mind when I started learning about diffusion was implementing one of these models from scratch in PyTorch. The lectures and other sources
         I've stumbled upon introduce some math ideas that I thought were interesting, so I thought I'd write down these notes detailing all I've learned. In particular,
-        I hope to write it in a structured manner such that I can use this as a resource for future reference, and it may serve other people. It should
-        also be that I am by no means an expert on Diffusion or AI in general, however I do feel like I was able to learn a lot from my experience learning about
-        these models and the math. Feel free to shoot me a message with any suggestions, corrections or critiques (contact information on this webpage).
+        I hope to write it in a structured manner such that I can use this as a resource for future reference, and it may serve other people. Feel free to shoot me
+        a message with any suggestions, corrections or critiques (contact information on this webpage).
     </p>
 
     <p>
         When researching about generative models (for images in particular), you'll probably hear about Generative Adversarial Networks (GANs). I won't get too into it, but
         the neat part about GANs is that they consist two models: a <i>Generator</i> network, which is responsible for generating new samples, and a <i>Discriminator</i> network,
         that is trained to be able to tell if a sample is from the generator (fake) or from the actual dataset (real). This style of adversarial training has its advantages,
-        interestingly, I've seen it used for neural-network based audio compression (See <a href="#ref1">[1]</a>)
+        interestingly, I've seen it used for neural-network based audio compression (See <a href="#ref1">[1]</a>).
         However, from my understanding, these have largely been replaced by Diffusion models nowadays (e.g StableDiffusion 3, Dall-E, Sora).
+        GANs suffer from issues like training instability (due to this dual model approach) and mode collapse (output becomes limited to a subset of the
+        actual distribution). Whereas with diffusion, common training objectives are quite simple, consisting of using some kind of Neural Network (NN) to learn to predict
+        the noise, or to give us a score. Diffusion also offers a very clear mathematical framework for generating/sampling from our dataset's distribution.
 
     </p>
 
@@ -58,7 +60,7 @@
     <p>
         Now, onto the actual model. Our goal is to create something that can generate coherent images that are similar to the ones in our training dataset. We'll
         assume there exists a probability distribution that describes our train set: $P_{data}$. We represent each of our images' pixel values as a really high dimensional
-        vector $x \in \mathbb{R}^d$, where $x \sim P_{data}$. However, a central issue here is that in practice we cannot sample from $P_{data}$. All we have are a limited number of
+        vector $x \in \mathbb{R}^d$, where $x_0 \sim P_{data}$. However, a central issue here is that in practice we cannot sample from $P_{data}$. All we have are a limited number of
         samples from it. The whole idea behind diffusion denoising is, we start at noise sampled from something like $\mathcal{N}(0, I_d)$ (standard gaussian) and somehow
         move towards a sample that is around the high density areas of our $P_{data}$, which should consist of coherent images. We do this by defining a forward
         noising process, that takes an actual image from our train set, and gradually noises it, until we end up with complete noise (in a distribution that
@@ -122,14 +124,102 @@
 
     <p>
         Which we can easily implement in PyTorch to get samples $x_t$ at any $t$ stage of noising. If, like me, you were wondering why this
-        preserves variance to $1$. It's pretty simple to show: our data samples are normalized using $\frac{x-mean}{std}$, which means we
-        start at samples with unit variance. And obviously $Var(\epsilon)=1$. So if we want the variance of $x_t$, we can use the fact that both $x_0$ and $\epsilon$ are
+        preserves variance to $1$. It's pretty simple to show: our data samples are normalized using $\frac{x-mean}{std}$, which means over our
+        dataset each sample has unit variance. And obviously $Var(\epsilon)=1$. So if we want the variance of $x_t$, we can use the fact that both $x_0$ and $\epsilon$ are
         independent, and use the linearity and properties of variance to get:
     </p>
 
     $$Var(x_t) = \bar{\alpha}(t) Var(x_0) + (1-\bar{\alpha}(t)) Var(\epsilon) = \bar{\alpha}(t) + (1-\bar{\alpha}(t))) = 1$$
 
+    <p>
+        Great! now we have a concrete way of defining how we move from a sample from our dataset, $x_0$, to a sample that consists of noise pulled
+        from a standard gaussian distribution, $x_1$. Next, we'll use these to define our reverse process and score, and elaborate on how training and
+        inference make use of these.
+    </p>
+
     <!-- END THE FORWARD PROCESS-->
+
+    <!-- The Score-->
+    <h3>
+        Score Matching
+    </h3>
+
+    <p>
+        Before getting to the reverse process, we must understand what "score" refers to here (this is diffusion via <i>score matching</i> after all). For
+        probability density function $p_t$ ($p$ is different at every $t$ because of the forward process, we have a slightly different distribution at different $t$'s),
+        our <i>conditional</i> score is defined as:
+    </p>
+
+    $$\nabla_x \, log \;p_t(x|x_0) $$
+
+    <p>
+        We can read this as "gradient of the $log$ likelihood of $x$ given $x_0$". Remember that $x_0$ is from our dataset $P_{data}$, so here our score is
+        called conditional because $p_t(x|x_0)$ gives us the density (i.e how concentrated) of $x$ assuming that we are starting from $x_0$. This function is
+        useful because the gradient gives us the direction of greatest ascent at a point $x$, so if we take our $x+\nabla_x \, log \;p_t(x|x_0) $, we are essentially
+        moving in the direction of higher density regions of our distribution. Since, due to our forward process, this higher density region
+        corresponds to a slightly less noisy version of $x$ (because it's a gaussian centered at factor of $x_0$). This works similarly to gradient descent,
+        in the sense that we can start at a point, and gradually move according to the gradient until we end up close to an extreme.
+    </p>
+
+    <div class="blog-image-container">
+        <img src="images/diffusion/scorepath.png" alt="moving in the direction of score" class="blog-image" style="height: 38vh; width: auto">
+        <p class="blog-image-desc">2D visualization of moving in the direction of the score. The blue dot would be our $x_t$. The
+        orange region corresponds to a high density for a given $p_t$</p>
+    </div>
+
+    <p>
+        Now, it turns out that for our conditional score, it's not hard to derive an easily computable form for it. And I think it's kind of cool, so I will
+        show the derivation. Remember we are using $x_t = x_0\sqrt{\bar{\alpha}(t)}+ \epsilon\sqrt{1 - \bar{\alpha}(t)}, \,\,\, \epsilon \in \mathcal{N}(0, I_d)$
+        from before as our $x_t$ in the forward, this has mean $\mu = x_0\sqrt{\bar{\alpha}(t)}$ and variance $\sigma^2 = 1-\bar{\alpha}(t)$ (note
+        that variance here is different, because we are only considering a single fixed $x_0$, which will not have variance, whereas before
+        we were looking at variance of $x_0$ over all samples). So, we have $p_t=\mathcal{N}(x_0\sqrt{\bar{\alpha}(t)}, (1-\bar{\alpha}(t))I_d)$ is a gaussian.
+        Since this is the case, we actually have an expressin for a conditional $p_t$, using the d-dimensional isotropic gaussian equation! (see end of <a href="#ref3">[3]</a>):
+    </p>
+
+    $$p_t(x)=(2\pi \sigma^2)^{\frac{d}{2}} exp({\frac{-||x-\mu||_2^2}{2\sigma^2}})$$
+
+    <p>
+        With this, we can take the log:
+    </p>
+
+    $$log \left( (2\pi \sigma^2)^{\frac{d}{2}} exp({\frac{-||x-\mu||_2^2}{2\sigma^2}}) \right) = {\frac{-||x-\mu||_2^2}{2\sigma^2}}$$
+
+    <p>
+        Then take the gradient w.r.t $x$ and plug in our $\mu$ and $\sigma^2$:
+    </p>
+
+    $$\nabla_x \; {\frac{-||x-\mu||_2^2}{2\sigma^2}} = {-\frac{x-\mu}{\sigma^2}} = -\frac{x- x_0 \sqrt{\bar{\alpha}(t)}}{1-\bar{\alpha}(t)}$$
+
+    <p>
+        We can rewrite our $x_t = x_0\sqrt{\bar{\alpha}(t)}+ \epsilon\sqrt{1 - \bar{\alpha}(t)}$, to show that the numerator from above is actually
+        ${x_t-x_0\sqrt{\bar{\alpha}(t)}}=\epsilon {\sqrt{1 - \bar{\alpha}(t)}}$, plug in and we finally get:
+    </p>
+
+    $$\nabla_x \, log \;p_t(x|x_0) = -\frac{\epsilon\sqrt{1 - \bar{\alpha}(t)}}{1-\bar{\alpha}(t)} = \frac{-\epsilon}{\sqrt{1-\bar{\alpha}(t)}}$$
+
+    <p>
+        What we have just derived is the exact expression we'll use in our loss function. We'll get to the algorithm and loss definition. But for now,
+        we understand the what and the why of the score function. This expression is also interesting because it tells us that the score can be written
+        in terms of the noise $\epsilon$ in this case. In fact, it's not hard to adapt this to train a <i>noise</i> predictor network (used in
+        the paper that popularized diffusion models for image generation, <a href="#ref4">[4]</a>), instead of the score network. So, to recap,
+        we can now compute the exact score for our model at any point $x_t$, given that we are considering the conditional (based on a single $x_0$ "direction" sample).
+    </p>
+
+    <p>
+        Now, another important definition is the idea of the <i>marginal</i> score. This is actually just $\nabla_x \, log \;p_t(x)$, i.e the
+        unconditional score, this would be great to have, because instead of moving towards a single sample $x_0$, it would guide us towards the
+        entire region that corresponds to being around the assumed $P_{data}$. However,
+    </p>
+
+
+
+    <!-- END The Score-->
+
+    <!-- The Reverse Process-->
+    <h3>
+        The Reverse Process
+    </h3>
+    <!-- END The Reverse Process-->
 
     <h2>References</h2>
 
@@ -146,6 +236,13 @@
               Song, Y. &amp; Ermon, S. (2020).
               <em>Score-Based Generative Modeling through Stochastic Differential Equations</em>.
               <a href="https://arxiv.org/pdf/2011.13456" target="_blank">arXiv:2011.13456</a>.
+            </p>
+        </li>
+        <li id="ref3">
+            <p>
+              Holderrieth, P &amp; Erives, E. (2025).
+              <em>An Introduction to Flow Matching and Diffusion Models</em>.
+              <a href="https://arxiv.org/pdf/2506.02070" target="_blank">arXiv:2506.02070</a>.
             </p>
         </li>
     </ol>
