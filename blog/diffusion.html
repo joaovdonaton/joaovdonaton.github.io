@@ -23,7 +23,7 @@
 <h1 style="text-align: center">Creating a score-matching diffusion model from scratch</h1>
 
 <div class="blog-content">
-    <h3>Intro</h3>
+    <h2>Intro</h2>
     <p>
     I had heard of diffusion models numerous times in the context of generative AI for image generation, but had never really taken interest in how
     they worked. A few months ago, I was lucky enough to stumble upon Peter Holderrieth and Ezra Erives' wonderful <a href="https://www.youtube.com/@peterholderrieth/videos">lectures</a>.
@@ -56,7 +56,7 @@
 
     <!-- THE FORWARD PROCESS -->
 
-    <h3>The Forward Process</h3>
+    <h2>The Forward Process</h2>
     <p>
         Now, onto the actual model. Our goal is to create something that can generate coherent images that are similar to the ones in our training dataset. We'll
         assume there exists a probability distribution that describes our train set: $P_{data}$. We represent each of our images' pixel values as a really high dimensional
@@ -140,9 +140,9 @@
     <!-- END THE FORWARD PROCESS-->
 
     <!-- The Score-->
-    <h3>
-        Score Matching
-    </h3>
+    <h2>
+        The Score Function
+    </h2>
 
     <p>
         Before getting to the reverse process, we must understand what "score" refers to here (this is diffusion via <i>score matching</i> after all). For
@@ -182,13 +182,13 @@
         With this, we can take the log:
     </p>
 
-    $$log \left( (2\pi \sigma^2)^{\frac{d}{2}} exp({\frac{-||x-\mu||_2^2}{2\sigma^2}}) \right) = {\frac{-||x-\mu||_2^2}{2\sigma^2}}$$
+    $$log \left( (2\pi \sigma^2)^{\frac{d}{2}} exp({\frac{-||x-\mu||_2^2}{2\sigma^2}}) \right) = log (2\pi \sigma^2)^{\frac{d}{2}} + {\frac{-||x-\mu||_2^2}{2\sigma^2}}$$
 
     <p>
         Then take the gradient w.r.t $x$ and plug in our $\mu$ and $\sigma^2$:
     </p>
 
-    $$\nabla_x \; {\frac{-||x-\mu||_2^2}{2\sigma^2}} = {-\frac{x-\mu}{\sigma^2}} = -\frac{x- x_0 \sqrt{\bar{\alpha}(t)}}{1-\bar{\alpha}(t)}$$
+    $$\nabla_x \; \left( log (2\pi \sigma^2)^{\frac{d}{2}} + {\frac{-||x-\mu||_2^2}{2\sigma^2}} \right) = {-\frac{x-\mu}{\sigma^2}} = -\frac{x- x_0 \sqrt{\bar{\alpha}(t)}}{1-\bar{\alpha}(t)}$$
 
     <p>
         We can rewrite our $x_t = x_0\sqrt{\bar{\alpha}(t)}+ \epsilon\sqrt{1 - \bar{\alpha}(t)}$, to show that the numerator from above is actually
@@ -208,20 +208,78 @@
     <p>
         Now, another important definition is the idea of the <i>marginal</i> score. This is actually just $\nabla_x \, log \;p_t(x)$, i.e the
         unconditional score, this would be great to have, because instead of moving towards a single sample $x_0$, it would guide us towards the
-        entire region that corresponds to being around the assumed $P_{data}$. However,
+        entire region that corresponds to being around the assumed $P_{data}$. However, this form is not possible to calculate in pratice. Instead,
+        we are able to implicity learn the score of the entire distribution by using the conditional score defined above.
     </p>
-
-
-
     <!-- END The Score-->
 
+    <!-- Learning the score function -->
+    <h2>Learning the score function</h2>
+
+    <p>
+        Now that we know about the forward process and score, and have concrete equations for these, we can get into the training objective
+        of our model. Recall that the entire goal here is to perform <i>score matching</i>, we want to learn a score, because we'll need
+        it to apply the reverse process (coming soon) and go from noise $x_1$ to a sample $x_0 \sim P_{data}$. A Neural Network will be used to
+        learn the score of a given $x$ at a point $t$ in time. The
+        <a href="https://www.digitalocean.com/community/tutorials/unet-architecture-image-segmentation">Convolutional U-Net</a> is an
+        architecture that has been shown to work well for this, so it's what we'll be using. A small detail that you won't find in the article linked,
+        is that our score network, which I'll now call $s_t^\theta$, is time dependent as well. The architecture I used in my implementation adds this information
+        via a time embedding. So, instead of using a single scalar $t \in (0,1)$, it takes as input $t$ and creates an embedding using a combination of
+        $sin$ and $cos$ functions, with learned frequencies. This information is then added to throughout the residual blocks of our u-net. We the network
+        to be able to learn non-linear time dynamics to better remove noise throughout the reverse process.
+    </p>
+
+    <p>
+        With that in mind, here is the loss function we'll be using to learn $s_t^{\theta}:$
+    </p>
+
+    $$\mathcal{L}(\theta) = \mathbb{E}_{t, x_0, x \sim p_t(\cdot | x_0)} \left[ ||s_t^{\theta}(x) - \nabla_x \; log \; p_t(x|x_0)||^2 \right]$$
+
+    <p>
+        In other words, the Mean Squared Error (MSE) between our predicted score and the actual score, averaged over all $t$, $x_0$ and $x \sim p_t(\cdot | x_0)$.
+        However, remember that we actually have an expression for $\nabla_x \; log \; p_t(x|x_0)$, so we get:
+    </p>
+
+    $$\mathcal{L}(\theta) = \mathbb{E}_{t, x_0, x \sim p_t(\cdot | x_0)} \left[ ||s_t^{\theta}(x) + \frac{\epsilon}{\sqrt{1-\bar{\alpha}(t)}}||^2 \right]$$
+
+    <p>
+        Therefore, for each sample in a batch, our train algorithm looks something like:
+        <ol>
+            <li>Select a sample $x_0 \sim P_{data}$</li>
+            <li>Select $t \in (0,1)$</li>
+            <li>Pull an $\epsilon$ from $\mathcal{N}(0,1)$</li>
+            <li>Compute $x_t = x_0\sqrt{\bar{\alpha}(t)}+ \epsilon\sqrt{1 - \bar{\alpha}(t)}$</li>
+            <li>Calculate loss $\mathcal{L}(\theta)$ averaged over entire batch</li>
+            <li>Update weights for $s_t^{\theta}$</li>
+        </ol>
+
+    <p>
+        Not too bad, right? Notice that for every sample in the batch, we are actually training our $s_t^{\theta}$ to approximate the conditional score, i.e
+        moving towards a single sample $x_0$ from the dataset. As I mentioned previously, it turns out that by doing this, we are implicitly training $s_t^{\theta}$
+        learning the marginal (for entire target distribution) score. Peter's lecture notes (<a href="#ref3">[3]</a>) explain that the loss function for the
+        marginal score, is actually just the loss for the conditional score (what we have above) with an added constant $C$. This means that they are minimized by
+        the same parameters $\theta$, which is what lets us learn from purely conditional scores.
+    </p>
+
+    <!-- END Learning the score function -->
+
     <!-- The Reverse Process-->
-    <h3>
+    <h2>
         The Reverse Process
-    </h3>
+    </h2>
     <!-- END The Reverse Process-->
 
-    <h2>References</h2>
+    <!-- CFG-->
+    <h2>
+        Classifier-Free Guidance
+    </h2>
+
+    <p>
+
+    </p>
+    <!-- END CFG-->
+
+    <h3>References</h3>
 
     <ol>
         <li id="ref1">
