@@ -39,6 +39,8 @@ body{
 }
 
 .blog-image-desc{
+    width: 50%;
     font-size: 1rem;
     margin-top: 0.25rem;
+    text-align: center;
 }

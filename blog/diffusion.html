@@ -256,9 +256,13 @@
     <p>
         Not too bad, right? Notice that for every sample in the batch, we are actually training our $s_t^{\theta}$ to approximate the conditional score, i.e
         moving towards a single sample $x_0$ from the dataset. As I mentioned previously, it turns out that by doing this, we are implicitly training $s_t^{\theta}$
-        learning the marginal (for entire target distribution) score. Peter's lecture notes (<a href="#ref3">[3]</a>) explain that the loss function for the
+        to learn the marginal (for entire target distribution) score. Peter's lecture notes (<a href="#ref3">[3]</a>) explain that the loss function for the
         marginal score, is actually just the loss for the conditional score (what we have above) with an added constant $C$. This means that they are minimized by
-        the same parameters $\theta$, which is what lets us learn from purely conditional scores.
+        the same parameters $\theta$, which is what lets us learn from purely conditional scores. Additionally, notice that during training we pick
+        $t \in (0,1)$ at random for every sample in a batch, this allows the model to learn to estimate the score at any stage of denoising. This includes
+        those steps close to $t=1$, where the image is pretty much entirely corrupted (gaussian noise), which will be our starting point during inference.
+        This is related to one of the drawbacks related to diffusion models, they are incredibly slow at training (and inference, as we'll see). The model
+        has to go through many epochs in order to see the different samples at different $t$ stages and learn how to accurately compute scores.
     </p>
 
     <!-- END Learning the score function -->
@@ -267,6 +271,56 @@
     <h2>
         The Reverse Process
     </h2>
+
+    <p>
+        Now, we need to actually use our learned score network $s_t^{\theta}$ in the reverse path, from $x_1 \sim \mathcal{N}(0, 1)$ (what we end up with after
+        the VP forward) to get to a $x_0 \sim P_{data}$. <a href="#ref2">[2]<a> shows that it's possible to derive an SDE that reverses the forward process, here it is:
+    </p>
+
+    $$dx = \left[ f(x,t) - g(t)^2 \nabla_x\; log \; p_t(x)\right]dt + g(t)dW$$
+
+    <p>
+        This SDE doesn't really present us with anything we haven't seen at this point. Notice how the drift $f(x,t)$ and diffusion coefficient $g(t)$
+        appear here again. We will use the same values as we used in the VP forward process defined in the Forward Process chapter. So, we will have
+        $f(x,t) = -\frac{1}{2} \beta(t)x_t$ and $g(t) = \sqrt{\beta(t)}$. Moreover, this SDE uses the marginal score $\nabla_x\; log \; p_t(x)$, recall
+        that we trained a loss $\mathcal{L}(\theta)$ that minimizes conditional loses, but as I stated, this is the same $\theta$ parameters that
+        minimize the marginal. For this reason, we can just use our $s_t^{\theta}$ here. We get:
+    </p>
+
+    $$dx = \left[ -\frac{1}{2} \beta(t)x_t - \beta(t) s_t^{\theta}(x) \right]dt + \sqrt{\beta(t)} dW$$
+
+    <p>
+        Now all we need to do is pick an $x_1 \sim \mathcal{N}(0,1)$ and solve this SDE from $t=1$ to $t=0$, by discretizing it into finite steps. The technique
+        we'll use for doing this is a variation of the Euler Method, called the <b>Euler Maruyama Method</b>. The Euler Method is a simple method for approximating
+        solutions to differential equations when they can't easily be solved analytically. The algorithm consists of picking an initial condition (starting point,
+        our $x_1$) and a step size $h$. Then, we update $x$ by adding the slope at the current position of $x$, scaled by $h$. Our SDE tells us the change in
+        $x$ (i.e $dx$), but it also has the brownian motion noise term $dW$ that we explained before. Hence, we need the Euler Maruyama version of this, which
+        is simply given by adding that stochastic term:
+    </p>
+
+    $$x_{t+1} = x_t + \left[ -\frac{1}{2} \beta(t)x_t - \beta(t) s_t^{\theta}(x) \right]h + \epsilon \sqrt{h \beta_t}, \;\;\; \epsilon \sim \mathcal{N}(0,1)$$
+
+    <p>
+        We pick step size $h$ by doing $h=\frac{1}{timesteps}$
+        In pratice, this sampling procedure is extremely simple to implement. And since our $s_t^{\theta}$ is trained at random $t \in (0,1)$, our model
+        can handle doing this process for any number of timesteps, so we can change $timesteps$ to any number we'd like, and experiment with it. Also,
+        keep in mind that the Euler Maruyama method is the absolute simplest technique for doing this, and there are other more sophisticated procedures
+        that may generate better results like Runge-Kutta methods (which allow us to get more precise slope estimates at the cost of computational complexity).
+    </p>
+
+    <p>
+        As I mentioned, solving this SDE using the Euler Maruyama method is our sampling procedure. By the time we reach $t=0$, if everything is working
+        properly, we should see an actually sample from our $P_{data}$ emerge. The reverse process is something you may have seen visualizations of, because it
+        does look fascinating, here is one:
+    </p>
+
+    <div class="blog-image-container">
+        <img src="images/diffusion/denoise_vp.gif" alt="visualization" class="blog-image" style="height: 25vh; width: auto">
+        <p class="blog-image-desc">From: <a href="https://yang-song.net/">Yang Song's blog </a>. The image (left) starts as random pixel
+        values pulled from $\mathcal{N}(0,1)$, and is gradually denoised to a coherent image. The 2D graph (right) shows that we start at a simple symmetric
+        distribution, and move towards something more complicated ($P_{data}$)</p>
+    </div>
+
     <!-- END The Reverse Process-->
 
     <!-- CFG-->
