@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <title>Notes on diffusion</title>
     <script>
         MathJax = {
@@ -23,7 +25,21 @@
 <h1 style="text-align: center">Creating a score-matching diffusion model from scratch</h1>
 
 <div class="blog-content">
-    <h2>Intro</h2>
+
+    <ol id="diffusion-chapters-list">
+        <li><a href="#chap-1">Intro</a></li>
+        <li><a href="#chap-2">The Forward Process</a></li>
+        <li><a href="#chap-3">The Score Function</a></li>
+        <li><a href="#chap-4">Learning the Score Function</a></li>
+        <li><a href="#chap-5">The Reverse Process</a></li>
+        <li><a href="#chap-6">Conditional Generation and Classifier-Free Guidance</a></li>
+        <li><a href="#chap-7">Implementation Details</a></li>
+    </ol>
+
+    <p class="mobile-note">Note that equations that overflow horizontally are scrollable!</p>
+
+    <h2 id="chap-1">Intro</h2>
+
     <p>
     I had heard of diffusion models numerous times in the context of generative AI for image generation, but had never really taken interest in how
     they worked. A few months ago, I was lucky enough to stumble upon Peter Holderrieth and Ezra Erives' wonderful <a href="https://www.youtube.com/@peterholderrieth/videos">lectures</a>.
@@ -54,9 +70,13 @@
         of diffusion.
     </p>
 
+    <p>
+        Here is the github repo with my implementation: <a href="https://github.com/joaovdonaton/diffusion-zero">https://github.com/joaovdonaton/diffusion-zero</a>
+    </p>
+
     <!-- THE FORWARD PROCESS -->
 
-    <h2>The Forward Process</h2>
+    <h2 id="chap-2">The Forward Process</h2>
     <p>
         Now, onto the actual model. Our goal is to create something that can generate coherent images that are similar to the ones in our training dataset. We'll
         assume there exists a probability distribution that describes our train set: $P_{data}$. We represent each of our images' pixel values as a really high dimensional
@@ -68,7 +88,7 @@
     </p>
 
     <div class="blog-image-container">
-        <img src="images/diffusion/forward.png" alt="diffusion forward process" class="blog-image">
+        <img src="images/diffusion/forward.png" alt="diffusion forward process" class="blog-image" id="img-forward">
         <p class="blog-image-desc">Forward process in 6 discrete timesteps.</p>
     </div>
 
@@ -120,7 +140,9 @@
         derivation, it turns out that the forward SDE has a solution for this:
     </p>
 
+    <div class="scrollable-equation">
     $$x_t = x_0\sqrt{\bar{\alpha}(t)}+ \epsilon\sqrt{1 - \bar{\alpha}(t)}, \,\,\, \epsilon \in \mathcal{N}(0, I_d)$$
+    </div>
 
     <p>
         Which we can easily implement in PyTorch to get samples $x_t$ at any $t$ stage of noising. If, like me, you were wondering why this
@@ -129,7 +151,9 @@
         independent, and use the linearity and properties of variance to get:
     </p>
 
+    <div class="scrollable-equation">
     $$Var(x_t) = \bar{\alpha}(t) Var(x_0) + (1-\bar{\alpha}(t)) Var(\epsilon) = \bar{\alpha}(t) + (1-\bar{\alpha}(t))) = 1$$
+    </div>
 
     <p>
         Great! now we have a concrete way of defining how we move from a sample from our dataset, $x_0$, to a sample that consists of noise pulled
@@ -140,7 +164,7 @@
     <!-- END THE FORWARD PROCESS-->
 
     <!-- The Score-->
-    <h2>
+    <h2 id="chap-3">
         The Score Function
     </h2>
 
@@ -162,7 +186,7 @@
     </p>
 
     <div class="blog-image-container">
-        <img src="images/diffusion/scorepath.png" alt="moving in the direction of score" class="blog-image" style="height: 38vh; width: auto">
+        <img src="images/diffusion/scorepath.png" alt="moving in the direction of score" class="blog-image" id="img-score-path">
         <p class="blog-image-desc">2D visualization of moving in the direction of the score. The blue dot would be our $x_t$. The
         orange region corresponds to a high density for a given $p_t$</p>
     </div>
@@ -176,26 +200,34 @@
         Since this is the case, we actually have an expressin for a conditional $p_t$, using the d-dimensional isotropic gaussian equation! (see end of <a href="#ref3">[3]</a>):
     </p>
 
+    <div class="scrollable-equation">
     $$p_t(x)=(2\pi \sigma^2)^{\frac{d}{2}} exp({\frac{-||x-\mu||_2^2}{2\sigma^2}})$$
+    </div>
 
     <p>
         With this, we can take the log:
     </p>
 
+    <div class="scrollable-equation">
     $$log \left( (2\pi \sigma^2)^{\frac{d}{2}} exp({\frac{-||x-\mu||_2^2}{2\sigma^2}}) \right) = log (2\pi \sigma^2)^{\frac{d}{2}} + {\frac{-||x-\mu||_2^2}{2\sigma^2}}$$
+    </div>
 
     <p>
         Then take the gradient w.r.t $x$ and plug in our $\mu$ and $\sigma^2$:
     </p>
 
+    <div class="scrollable-equation">
     $$\nabla_x \; \left( log (2\pi \sigma^2)^{\frac{d}{2}} + {\frac{-||x-\mu||_2^2}{2\sigma^2}} \right) = {-\frac{x-\mu}{\sigma^2}} = -\frac{x- x_0 \sqrt{\bar{\alpha}(t)}}{1-\bar{\alpha}(t)}$$
+    </div>
 
     <p>
         We can rewrite our $x_t = x_0\sqrt{\bar{\alpha}(t)}+ \epsilon\sqrt{1 - \bar{\alpha}(t)}$, to show that the numerator from above is actually
         ${x_t-x_0\sqrt{\bar{\alpha}(t)}}=\epsilon {\sqrt{1 - \bar{\alpha}(t)}}$, plug in and we finally get:
     </p>
 
+    <div class="scrollable-equation">
     $$\nabla_x \, log \;p_t(x|x_0) = -\frac{\epsilon\sqrt{1 - \bar{\alpha}(t)}}{1-\bar{\alpha}(t)} = \frac{-\epsilon}{\sqrt{1-\bar{\alpha}(t)}}$$
+    </div>
 
     <p>
         What we have just derived is the exact expression we'll use in our loss function. We'll get to the algorithm and loss definition. But for now,
@@ -214,7 +246,7 @@
     <!-- END The Score-->
 
     <!-- Learning the score function -->
-    <h2>Learning the score function</h2>
+    <h2 id="chap-4">Learning the score function</h2>
 
     <p>
         Now that we know about the forward process and score, and have concrete equations for these, we can get into the training objective
@@ -233,21 +265,25 @@
         With that in mind, here is the loss function we'll be using to learn $s_t^{\theta}:$
     </p>
 
+    <div class="scrollable-equation">
     $$\mathcal{L}(\theta) = \mathbb{E}_{t, x_0, x \sim p_t(\cdot | x_0)} \left[ ||s_t^{\theta}(x) - \nabla_x \; log \; p_t(x|x_0)||^2 \right]$$
+    </div>
 
     <p>
         In other words, the Mean Squared Error (MSE) between our predicted score and the actual score, averaged over all $t$, $x_0$ and $x \sim p_t(\cdot | x_0)$.
         However, remember that we actually have an expression for $\nabla_x \; log \; p_t(x|x_0)$, so we get:
     </p>
 
+    <div class="scrollable-equation">
     $$\mathcal{L}(\theta) = \mathbb{E}_{t, x_0, x \sim p_t(\cdot | x_0)} \left[ ||s_t^{\theta}(x) + \frac{\epsilon}{\sqrt{1-\bar{\alpha}(t)}}||^2 \right]$$
+    </div>
 
     <p>
         Therefore, for each sample in a batch, our train algorithm looks something like:
         <ol>
             <li>Select a sample $x_0 \sim P_{data}$</li>
             <li>Select $t \in (0,1)$</li>
-            <li>Pull an $\epsilon$ from $\mathcal{N}(0,1)$</li>
+            <li>Pull an $\epsilon$ from $\mathcal{N}(0,I_d)$</li>
             <li>Compute $x_t = x_0\sqrt{\bar{\alpha}(t)}+ \epsilon\sqrt{1 - \bar{\alpha}(t)}$</li>
             <li>Calculate loss $\mathcal{L}(\theta)$ averaged over entire batch</li>
             <li>Update weights for $s_t^{\theta}$</li>
@@ -268,13 +304,13 @@
     <!-- END Learning the score function -->
 
     <!-- The Reverse Process-->
-    <h2>
+    <h2 id="chap-5">
         The Reverse Process
     </h2>
 
     <p>
-        Now, we need to actually use our learned score network $s_t^{\theta}$ in the reverse path, from $x_1 \sim \mathcal{N}(0, 1)$ (what we end up with after
-        the VP forward) to get to a $x_0 \sim P_{data}$. <a href="#ref2">[2]<a> shows that it's possible to derive an SDE that reverses the forward process, here it is:
+        Now, we need to actually use our learned score network $s_t^{\theta}$ in the reverse path, from $x_1 \sim \mathcal{N}(0, I_d)$ (what we end up with after
+        the VP forward) to get to a $x_0 \sim P_{data}$. <a href="#ref2">[2]</a> shows that it's possible to derive an SDE that reverses the forward process, here it is:
     </p>
 
     $$dx = \left[ f(x,t) - g(t)^2 \nabla_x\; log \; p_t(x)\right]dt + g(t)dW$$
@@ -287,10 +323,12 @@
         minimize the marginal. For this reason, we can just use our $s_t^{\theta}$ here. We get:
     </p>
 
+    <div class="scrollable-equation">
     $$dx = \left[ -\frac{1}{2} \beta(t)x_t - \beta(t) s_t^{\theta}(x) \right]dt + \sqrt{\beta(t)} dW$$
+    </div>
 
     <p>
-        Now all we need to do is pick an $x_1 \sim \mathcal{N}(0,1)$ and solve this SDE from $t=1$ to $t=0$, by discretizing it into finite steps. The technique
+        Now all we need to do is pick an $x_1 \sim \mathcal{N}(0,I_d)$ and solve this SDE from $t=1$ to $t=0$, by discretizing it into finite steps. The technique
         we'll use for doing this is a variation of the Euler Method, called the <b>Euler Maruyama Method</b>. The Euler Method is a simple method for approximating
         solutions to differential equations when they can't easily be solved analytically. The algorithm consists of picking an initial condition (starting point,
         our $x_1$) and a step size $h$. Then, we update $x$ by adding the slope at the current position of $x$, scaled by $h$. Our SDE tells us the change in
@@ -298,7 +336,9 @@
         is simply given by adding that stochastic term:
     </p>
 
-    $$x_{t+1} = x_t + \left[ -\frac{1}{2} \beta(t)x_t - \beta(t) s_t^{\theta}(x) \right]h + \epsilon \sqrt{h \beta_t}, \;\;\; \epsilon \sim \mathcal{N}(0,1)$$
+    <div class="scrollable-equation">
+    $$x_{t+1} = x_t + \left[ -\frac{1}{2} \beta(t)x_t - \beta(t) s_t^{\theta}(x) \right]h + \epsilon \sqrt{h \beta_t}, \;\;\; \epsilon \sim \mathcal{N}(0,I_d)$$
+    </div>
 
     <p>
         We pick step size $h$ by doing $h=\frac{1}{timesteps}$
@@ -315,17 +355,27 @@
     </p>
 
     <div class="blog-image-container">
-        <img src="images/diffusion/denoise_vp.gif" alt="visualization" class="blog-image" style="height: 25vh; width: auto">
+        <img src="images/diffusion/denoise_vp.gif" alt="visualization" class="blog-image" id="img-yang-blog">
         <p class="blog-image-desc">From: <a href="https://yang-song.net/">Yang Song's blog </a>. The image (left) starts as random pixel
-        values pulled from $\mathcal{N}(0,1)$, and is gradually denoised to a coherent image. The 2D graph (right) shows that we start at a simple symmetric
+        values pulled from $\mathcal{N}(0,I_d)$, and is gradually denoised to a coherent image. The 2D graph (right) shows that we start at a simple symmetric
         distribution, and move towards something more complicated ($P_{data}$)</p>
     </div>
 
     <!-- END The Reverse Process-->
 
     <!-- CFG-->
-    <h2>
-        Classifier-Free Guidance
+    <h2 id="chap-6">
+        Conditional Generation and Classifier-Free Guidance
+    </h2>
+
+    <p>
+
+    </p>
+    <!-- END CFG-->
+
+    <!-- CFG-->
+    <h2 id="chap-7">
+        Implementation Details
     </h2>
 
     <p>
@@ -352,9 +402,23 @@
         </li>
         <li id="ref3">
             <p>
-              Holderrieth, P &amp; Erives, E. (2025).
+              Holderrieth, P. &amp; Erives, E. (2025).
               <em>An Introduction to Flow Matching and Diffusion Models</em>.
               <a href="https://arxiv.org/pdf/2506.02070" target="_blank">arXiv:2506.02070</a>.
+            </p>
+        </li>
+        <li id="ref4">
+            <p>
+              Ho, J., Jain, A. &amp; Abbeel, P. (2020).
+              <em>Denoising Diffusion Probabilistic Models</em>.
+              <a href="https://arxiv.org/pdf/2006.11239" target="_blank">arXiv:2006.11239</a>.
+            </p>
+        </li>
+        <li id="ref5">
+            <p>
+              Ho, J. &amp; Salimans, T. (2022).
+              <em>CLASSIFIER-FREE DIFFUSION GUIDANCE</em>.
+              <a href="https://arxiv.org/pdf/2207.12598" target="_blank">arXiv:2207.12598</a>.
             </p>
         </li>
     </ol>
