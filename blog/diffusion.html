@@ -240,7 +240,7 @@
     <p>
         Now, another important definition is the idea of the <i>marginal</i> score. This is actually just $\nabla_x \, log \;p_t(x)$, i.e the
         unconditional score, this would be great to have, because instead of moving towards a single sample $x_0$, it would guide us towards the
-        entire region that corresponds to being around the assumed $P_{data}$. However, this form is not possible to calculate in pratice. Instead,
+        entire region that corresponds to being around the assumed $P_{data}$. However, this form is not possible to calculate in practice. Instead,
         we are able to implicity learn the score of the entire distribution by using the conditional score defined above.
     </p>
     <!-- END The Score-->
@@ -257,8 +257,8 @@
         architecture that has been shown to work well for this, so it's what we'll be using. A small detail that you won't find in the article linked,
         is that our score network, which I'll now call $s_t^\theta$, is time dependent as well. The architecture I used in my implementation adds this information
         via a time embedding. So, instead of using a single scalar $t \in (0,1)$, it takes as input $t$ and creates an embedding using a combination of
-        $sin$ and $cos$ functions, with learned frequencies. This information is then added to throughout the residual blocks of our u-net. We the network
-        to be able to learn non-linear time dynamics to better remove noise throughout the reverse process.
+        $sin$ and $cos$ functions, with learned frequencies. This information is then added throughout the residual blocks of our u-net. With this, the network
+        is able to learn non-linear time dynamics to better remove noise as the reverse process progresse.
     </p>
 
     <p>
@@ -342,7 +342,7 @@
 
     <p>
         We pick step size $h$ by doing $h=\frac{1}{timesteps}$
-        In pratice, this sampling procedure is extremely simple to implement. And since our $s_t^{\theta}$ is trained at random $t \in (0,1)$, our model
+        In practice, this sampling procedure is extremely simple to implement. And since our $s_t^{\theta}$ is trained at random $t \in (0,1)$, our model
         can handle doing this process for any number of timesteps, so we can change $timesteps$ to any number we'd like, and experiment with it. Also,
         keep in mind that the Euler Maruyama method is the absolute simplest technique for doing this, and there are other more sophisticated procedures
         that may generate better results like Runge-Kutta methods (which allow us to get more precise slope estimates at the cost of computational complexity).
@@ -369,8 +369,49 @@
     </h2>
 
     <p>
-
+        We now have the full setup for building a diffusion model ready! However, you'll notice that our sampling procedure has no information about
+        the label we want to generate. In the current state, our model would just randomly pull from the learned $P_{data}$. This is called <i>unconditional</i>
+        generation, and diffusion models can still generate high quality samples like this. However, it may be useful to perform <i>conditional</i> generation
+        (also referred to as <i>guided</i> generation),
+        where we basically give our U-Net information about labels for each sample, during training and inference. Formally, we'd say that we want to sample
+        $x_0 \sim P_{data}(x|y)$ where $y \in \{0,1,2,...,n\}$ for $n$ classes. In practice, this is quite easy to implement, now we'd want to learn a score-network
+        $s_t^{\theta}(x | y)$. To do this, we can just sample $(x_0, y) \sim P_{data}$ (i.e we'd need the sample and the label) during training. We pass label
+        information onto $s_t^{\theta}(x | y)$ by having it inject this information (stored via some kind of embedding, like $t$) into each residual unit of our U-Net.
     </p>
+
+    <p>
+        We can go even further with conditional generation, using a technique called <b>Classifier-Free Guidance (CFG)</b> <a href="#ref5">[5]</a>. Basically, CFG
+        lets us control the guided generation's effect, which leads to significantly better samples. Also, notice the name classifier-<i>free</i> guidance, this is an
+        improved version of the original (and apparently no longer used) method that lets us control the strength of guidance. Without getting too much into it, the old iteration relied on
+        Bayes' rule, which flips the conditional probability, so one of the terms ends up needing a $p_t(y|x)$ ($y$ given $x$, not $x$ given $y$). $p_t(y|x)$
+        is a classifier because it is basically gives us the class probability, given a noisy sample $x$. Having to train a classifier is obviously costly, and
+        can lead to instability.
+
+
+        I will first present the main equation for CFG:
+    </p>
+
+    <div class="scrollable-equation">
+    $$\tilde{s}_t^{\theta}(x|y) = (1-w)s_t^{\theta}(x) + w s_t^{\theta}(x|y)$$
+    </div>
+
+    <p>
+        Here, $w > 1$ specifies the guidance strength. None of that inverted probability $(y|x)$ here, but we do have both $s_t^{\theta}(x|y)$, the conditional score network and $s_t^{\theta}(x)$, the unconditional
+        score network. So in order to implement CFG, we'd need both the conditional and unconditional score networks, then we can just use $\tilde{s}_t^{\theta}(x|y)$
+        with a given $w$ as our score predictor during the reverse process. Does this mean we have to train two score networks? Nope! Thankfully, there is a way to
+        get both during training.
+    </p>
+
+    <p>
+        The technique we use to get the unconditional and conditional scores simultaneously and in one model is actually quite simple. We add a new hyperparameter,
+        $\eta$, this is the probability that we will drop the label for a given class during training, and have the model learn the score estimate unconditionally.
+        The way to "drop a label" in practice consists of adding a new class to our $y$ set, we'll call it the <i>null</i> class, so now $y \in \{0,1,2,...,n, \varnothing\}$
+        where $y = \varnothing$ is the null label. That's pretty much it. Our score network $s_t^{\theta}(x|y)$, will now be trained such that if $y$ is $\varnothing$,
+        then the generation is class-less (which means $s_t^{\theta}(x|\varnothing) = s_t^{\theta}(x)$). We now have everything we need to
+        implement CFG, all we need to do is use $\tilde{s}_t^{\theta}(x|y)$ during generation. I'd suggest looking through my
+        <a href="https://github.com/joaovdonaton/diffusion-zero/blob/main/diffusion.py">code</a> for this, it truly is simple to implement.
+    </p>
+
     <!-- END CFG-->
 
     <!-- CFG-->
@@ -379,8 +420,17 @@
     </h2>
 
     <p>
-
+        My experiments were performend on MNIST Digits, the dataset was divided into training and validation (so we can keep track of validation loss during training).
+        It should be noted that MNIST Digits is extremely simple (10 classes, 28x28 images, single-channel, primitive shapes), but it does show that
+        at least my implementation is functional. I'm yet to try my model on other datasets. CIFAR-10 might be a good one, I don't see why it wouldn't work with
+        the appropriate adjustments in u-net size, and hyperparameters.
     </p>
+
+    <div class="blog-image-container">
+        <img src="images/diffusion/example-out.png" alt="example outputs" class="blog-image" id="img-example-mnist-path">
+        <p class="blog-image-desc">Example outputs of score-matchign diffusion trained on MNIST Digits, for classes 1-9. Trained for ~130 epochs, LR=1E-4, $\eta$=0.1,
+        $\beta_{min}=0.1$ and $\beta_{max}=20$. Convolutional U-Net with channels [64,128,256], 2 residual units per block, time embed dim of 128.</p>
+    </div>
     <!-- END CFG-->
 
     <h3>References</h3>
