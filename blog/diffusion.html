@@ -45,7 +45,7 @@
     they worked. A few months ago, I was lucky enough to stumble upon Peter Holderrieth and Ezra Erives' wonderful <a href="https://www.youtube.com/@peterholderrieth/videos">lectures</a>.
     This is an incredible introductory resource on the topic, and the accompanying lecture notes and labs are extremely well put together. The first thing
         that came to mind when I started learning about diffusion was implementing one of these models from scratch in PyTorch. The lectures and other sources
-        I've stumbled upon introduce some math ideas that I thought were interesting, so I thought I'd write down these notes detailing all I've learned. In particular,
+        I've stumbled upon introduce some math ideas that I thought were interesting, so I had the idea of writing these notes detailing all I've learned. In particular,
         I hope to write it in a structured manner such that I can use this as a resource for future reference, and it may serve other people. Feel free to shoot me
         a message with any suggestions, corrections or critiques (contact information on this webpage).
     </p>
@@ -63,7 +63,7 @@
     </p>
 
     <p>I'll be assuming a certain level of math background, but the main concepts will be explained as they come up. I'll assume familiarity with: vectors, matrices,
-    PDFs, gaussian distributions, calculus (maybe just like the idea of differential equations should be enough), and obviously principles of deep learning. Also,
+    PDFs, gaussian distributions, calculus, differential equations, and obviously principles of deep learning. Also,
         keep in mind there are a few different variations of diffusion denoisers (different learning objective, discrete vs continuous definitions). My implementation
         uses a continuous-time score-matching approach, and some definitions and equations from <a href="#ref2">[2]</a>. This one
         is interesting specifically because it uses the differential equations we'll see here to build a sort of framework for different types
@@ -105,18 +105,19 @@
         is the $dW$ term, this is what makes this equation <i>Stochastic</i>. It is defined as:
     </p>
 
-    $$dw \sim \mathcal{N}(0, I_ddt)$$
+    $$dW \sim \mathcal{N}(0, I_ddt)$$
 
     <p>
         This is actually called <b>Brownian Motion</b>. In short, random noise pulled from a Gaussian Distribution centered at 0, and scaled by the change in time. And it
-        describes how noise is added to $x$ at eat timestep. Fun fact, in physics, brownian motion describes the randomness of the movements of particles suspended under
-        certain conditions. An important property that should be clear is that the changes from $t$ to $t+1$ are completely independent of whatever happened before.
+        describes how noise is added to $x$ at each timestep. Fun fact, in physics, brownian motion describes the randomness of the movements of particles suspended under
+        certain conditions. An important property that should be clear is that the changes from $t$ to $t+1$ are completely independent of whatever happened before (aka
+        the Markov property).
     </p>
 
     <p>
         We also have $f(x, t)$, the <i>drift coefficient</i> and $g(t)$ the diffusion coefficient. These are strategically defined to be functions such that we end up
         at our desired distribution at the end of the forward process. There are two common variations of this, the Variance Exploding (VE) and Variance Preserving (VP) processes.
-        My first attempt a implementing this was actually using VE, but I had trouble getting it to work, so I switched to VP. One thing you'll notice with the implementation
+        My first attempt at implementing this was actually using VE, but I had trouble getting it to work, so I switched to VP. One thing you'll notice with the implementation
         of these equations is that it's pretty easy to run into numerical issues (zero division, explosion).
         For the purposes of this implementation, we'll focus on VP, which is set up in a way that we always end up with $x_1 \sim \mathcal{N}(0,I_d)$
         (notice the notation, $x_1$ is sample at $t=1$, i.e after forward process). Here's the VP forward:
@@ -156,9 +157,9 @@
     </div>
 
     <p>
-        Great! now we have a concrete way of defining how we move from a sample from our dataset, $x_0$, to a sample that consists of noise pulled
-        from a standard gaussian distribution, $x_1$. Next, we'll use these to define our reverse process and score, and elaborate on how training and
-        inference make use of these.
+        Great! now we have a concrete way of defining how we move from a sample from our dataset ($x_0$) to a sample that consists of noise pulled
+        from a standard gaussian distribution ($x_1$). Next, we'll use these to define our reverse process and score, and elaborate on how training and
+        inference makes use of these.
     </p>
 
     <!-- END THE FORWARD PROCESS-->
@@ -180,7 +181,7 @@
         We can read this as "gradient of the $log$ likelihood of $x$ given $x_0$". Remember that $x_0$ is from our dataset $P_{data}$, so here our score is
         called conditional because $p_t(x|x_0)$ gives us the density (i.e how concentrated) of $x$ assuming that we are starting from $x_0$. This function is
         useful because the gradient gives us the direction of greatest ascent at a point $x$, so if we take our $x+\nabla_x \, log \;p_t(x|x_0) $, we are essentially
-        moving in the direction of higher density regions of our distribution. Since, due to our forward process, this higher density region
+        moving in the direction of higher density regions of our distribution. Due to our forward process, this higher density region
         corresponds to a slightly less noisy version of $x$ (because it's a gaussian centered at factor of $x_0$). This works similarly to gradient descent,
         in the sense that we can start at a point, and gradually move according to the gradient until we end up close to an extreme.
     </p>
@@ -188,7 +189,7 @@
     <div class="blog-image-container">
         <img src="images/diffusion/scorepath.png" alt="moving in the direction of score" class="blog-image" id="img-score-path">
         <p class="blog-image-desc">2D visualization of moving in the direction of the score. The blue dot would be our $x_t$. The
-        orange region corresponds to a high density for a given $p_t$</p>
+        orange region corresponds to a high density area for a given $p_t$</p>
     </div>
 
     <p>
@@ -258,7 +259,7 @@
         is that our score network, which I'll now call $s_t^\theta$, is time dependent as well. The architecture I used in my implementation adds this information
         via a time embedding. So, instead of using a single scalar $t \in (0,1)$, it takes as input $t$ and creates an embedding using a combination of
         $sin$ and $cos$ functions, with learned frequencies. This information is then added throughout the residual blocks of our u-net. With this, the network
-        is able to learn non-linear time dynamics to better remove noise as the reverse process progresse.
+        is able to learn non-linear time dynamics to better remove noise as the reverse process progresses.
     </p>
 
     <p>
@@ -341,7 +342,7 @@
     </div>
 
     <p>
-        We pick step size $h$ by doing $h=\frac{1}{timesteps}$
+        We pick step size $h$ by doing $h=\frac{1}{timesteps}$.
         In practice, this sampling procedure is extremely simple to implement. And since our $s_t^{\theta}$ is trained at random $t \in (0,1)$, our model
         can handle doing this process for any number of timesteps, so we can change $timesteps$ to any number we'd like, and experiment with it. Also,
         keep in mind that the Euler Maruyama method is the absolute simplest technique for doing this, and there are other more sophisticated procedures
@@ -350,7 +351,7 @@
 
     <p>
         As I mentioned, solving this SDE using the Euler Maruyama method is our sampling procedure. By the time we reach $t=0$, if everything is working
-        properly, we should see an actually sample from our $P_{data}$ emerge. The reverse process is something you may have seen visualizations of, because it
+        properly, we should see an actually sample from our assumed $P_{data}$ emerge. The reverse process is something you may have seen visualizations of, and it
         does look fascinating, here is one:
     </p>
 
@@ -374,7 +375,7 @@
         generation, and diffusion models can still generate high quality samples like this. However, it may be useful to perform <i>conditional</i> generation
         (also referred to as <i>guided</i> generation),
         where we basically give our U-Net information about labels for each sample, during training and inference. Formally, we'd say that we want to sample
-        $x_0 \sim P_{data}(x|y)$ where $y \in \{0,1,2,...,n\}$ for $n$ classes. In practice, this is quite easy to implement, now we'd want to learn a score-network
+        $x_0 \sim P_{data}(x|y)$ where $y \in \{0,1,2,...,n\}$ for $n$ classes. In practice, this is quite easy to implement, now we'd want to learn a guided score-network
         $s_t^{\theta}(x | y)$. To do this, we can just sample $(x_0, y) \sim P_{data}$ (i.e we'd need the sample and the label) during training. We pass label
         information onto $s_t^{\theta}(x | y)$ by having it inject this information (stored via some kind of embedding, like $t$) into each residual unit of our U-Net.
     </p>
@@ -403,9 +404,9 @@
     </p>
 
     <p>
-        The technique we use to get the unconditional and conditional scores simultaneously and in one model is actually quite simple. We add a new hyperparameter,
-        $\eta$, this is the probability that we will drop the label for a given class during training, and have the model learn the score estimate unconditionally.
-        The way to "drop a label" in practice consists of adding a new class to our $y$ set, we'll call it the <i>null</i> class, so now $y \in \{0,1,2,...,n, \varnothing\}$
+        The technique we use to get the unconditional and conditional scores simultaneously and in one model is actually quite simple. We add a new hyperparameter
+        $\eta$, this is the probability that we will drop the label for a given sample during training, and have the model learn the score estimate unconditionally.
+        The way to "drop a label" in practice consists of adding a new class to our $y$ set. We'll call it the <i>null</i> class, so now $y \in \{0,1,2,...,n, \varnothing\}$
         where $y = \varnothing$ is the null label. That's pretty much it. Our score network $s_t^{\theta}(x|y)$, will now be trained such that if $y$ is $\varnothing$,
         then the generation is class-less (which means $s_t^{\theta}(x|\varnothing) = s_t^{\theta}(x)$). We now have everything we need to
         implement CFG, all we need to do is use $\tilde{s}_t^{\theta}(x|y)$ during generation. I'd suggest looking through my
