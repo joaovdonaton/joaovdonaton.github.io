@@ -182,30 +182,45 @@ a:visited{
 }
 
 @media (max-width: 780px){
+    /* Links stack vertically. The nav drops out of sticky positioning here —
+       a 5-item stack is tall enough to eat half a phone viewport if it pins. */
     #navbar{
+        position: static;
         height: auto;
         flex-direction: column;
         align-items: stretch;
         gap: 0;
         padding: 0;
+        background: var(--bg);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
     }
 
     #my-name{
-        padding: 0.85rem 1.25rem 0.6rem;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--line);
     }
 
     .navbar-container:last-child{
-        overflow-x: auto;
-        scrollbar-width: none;
-        padding: 0 1.25rem 0.5rem;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        padding: 0.5rem 0.75rem 0.75rem;
     }
 
-    .navbar-container:last-child::-webkit-scrollbar{
-        display: none;
+    .navbar-item{
+        padding: 0.7rem 0.9rem;
+        font-size: 0.95rem;
     }
 
+    /* accent moves from an underline to a bar down the left edge */
     .navbar-item-current::after{
-        bottom: -0.5rem;
+        left: 0;
+        right: auto;
+        top: 0.6rem;
+        bottom: 0.6rem;
+        width: 2px;
+        height: auto;
     }
 }
 
