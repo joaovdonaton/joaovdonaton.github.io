@@ -1,28 +1,100 @@
-/* ---------- ABOUT PAGE ----------*/
+/* ---------- ABOUT / CONTACT PAGE ---------- */
 
 #contact-page-container{
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.85fr);
+    gap: 4.5rem;
+    align-items: start;
 }
 
 .contact-page-panel{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    min-width: 0;
+}
+
+.contact-page-panel h1{
+    font-size: clamp(1.9rem, 4vw, 2.5rem);
+}
+
+.updated{
+    margin-top: 0.6rem;
+    font-size: 0.85rem;
+    color: var(--ink-3);
 }
 
 .about-description{
-    width: 80%;
+    margin-top: 1.5rem;
+    max-width: var(--measure);
+    color: var(--ink-2);
+    font-size: 1.0625rem;
 }
 
-@media (max-width: 600px) {
+/* Contact card */
+
+.contact-card{
+    padding: 1.75rem;
+    background: var(--bg-subtle);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+}
+
+.contact-card h2{
+    font-size: 1.15rem;
+}
+
+.contact-list{
+    list-style: none;
+    margin: 1.25rem 0 0;
+    padding: 0;
+}
+
+.contact-list li{
+    padding: 0.85rem 0;
+    border-top: 1px solid var(--line);
+}
+
+.contact-list li:first-child{
+    border-top: 0;
+    padding-top: 0;
+}
+
+.contact-label{
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 0.15rem;
+}
+
+.contact-value{
+    font-size: 0.95rem;
+    color: var(--ink);
+    word-break: break-word;
+}
+
+/* Natural aspect ratio — forcing a fixed box here crops the photo. */
+.contact-page-panel > img{
+    width: 100%;
+    height: auto;
+    margin-top: 1.5rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+}
+
+@media (max-width: 900px){
     #contact-page-container{
-        display: grid;
-        grid-template-rows: 1fr 1fr;
-        grid-template-columns: 1fr;
+        gap: 3rem;
     }
-    .contact-page-panel img{
-        width: 80vw;
-        height: auto;
+}
+
+@media (max-width: 780px){
+    #contact-page-container{
+        grid-template-columns: 1fr;
+        gap: 3rem;
+    }
+
+    .about-description{
+        max-width: none;
     }
 }

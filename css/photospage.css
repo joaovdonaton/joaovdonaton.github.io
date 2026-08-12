@@ -1,67 +1,51 @@
-#photo-page-container{
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
+/* ---------- PHOTOS PAGE ---------- */
 
-    gap: 1.5rem;
+#photo-page-container{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 2.75rem 2rem;
 }
 
 .single-photo-container{
-    background-color: lightgray;
-    padding: 0.5rem;
-
-    box-shadow: 0.5rem 0.5rem 0.5rem;
-}
-
-.single-photo-container img{
-    width: auto;
-    height: 100%;
-    transition: 1s;
-}
-
-.single-photo-container img:hover{
-    transform: scale(1.3);
-}
-
-.photo-description{
-    text-align: center;
-    width: 26.6rem;
-    color: rgb(74, 74, 74);
+    min-width: 0;
 }
 
 .img-holder{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    width: 26.6rem;
-    height: 15rem;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--bg-subtle);
 }
 
-@media (max-width: 600px){
-    .single-photo-container{
-        width: 90%;
-    }
+/* Nearly every photo is a 4:3 landscape, so the grid matches that ratio and
+   the shots render uncropped. The one portrait shot centre-crops into it. */
+.single-photo-container img{
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    transition: transform .6s var(--ease);
+}
 
-    .img-holder{
-        display: flex;
-        align-items: center;
-        justify-content: center;
+.single-photo-container:hover img{
+    transform: scale(1.04);
+}
 
-        width: 100%;
-        height: auto;
-    }
+.photo-description{
+    margin-top: 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--ink-3);
+}
 
-    .single-photo-container img{
-        width: 80%;
-        height: auto;
-        transition: 1s;
-    }
+.photo-description i{
+    color: var(--ink-2);
+    font-style: italic;
+}
 
-    .photo-description{
-        text-align: left;
-        color: rgb(74, 74, 74);
-        width: 100%;
+@media (max-width: 780px){
+    #photo-page-container{
+        grid-template-columns: 1fr;
+        gap: 2rem;
     }
 }

@@ -1,98 +1,137 @@
-/* ---------- MAIN PAGE ----------*/
+/* ---------- MAIN PAGE ---------- */
 
 #main-page-container{
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 400px);
+    gap: 5rem;
+    align-items: start;
 }
 
 .main-page-panel{
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-}
-
-.main-page-panel *{
-    margin: 0;
-}
-
-.description{
-    margin-top: 2rem;
-    font-size: 1.1rem;
-    width: 70%;
-    color: #717171;
-    text-align: center;
+    min-width: 0;
 }
 
 #name-header{
-    font-size: 4rem;
+    margin-top: 0.9rem;
+    font-size: clamp(2.4rem, 5.5vw, 3.5rem);
+    letter-spacing: -0.03em;
 }
+
+.description{
+    margin-top: 1.25rem;
+    max-width: var(--measure);
+    font-size: 1.0625rem;
+    color: var(--ink-2);
+}
+
+.description:first-of-type{
+    margin-top: 1.5rem;
+    font-size: 1.15rem;
+    color: var(--ink);
+}
+
+/* Pronunciation button — a real button, styled as quiet inline text. */
 
 #play-name{
-    color: blue;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 1.75rem;
+    padding: 0.4rem 0.85rem;
+    font: inherit;
+    font-size: 0.9rem;
+    color: var(--ink-2);
+    background: var(--bg);
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: border-color .18s var(--ease), color .18s var(--ease), background-color .18s var(--ease);
 }
 
-#play-name:hover {
-    border-bottom: purple;
-    color: purple;
-    cursor: pointer;
+#play-name:hover{
+    color: var(--ink);
+    border-color: var(--ink);
+    background: var(--bg-subtle);
 }
+
+#play-name svg{
+    flex: none;
+}
+
+/* Social links */
 
 #icons-container{
     display: flex;
-    width: 40%;
-    flex-direction: row;
-    justify-content: space-around;
-    gap: 5%;
-}
-
-.link-icon{
-    display: inline-block;
-    width: 15%;
-    height: auto;
+    align-items: center;
+    gap: 1.5rem;
+    margin-top: 2.25rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--line);
 }
 
 #icons-container a{
-    display: contents; /* necessary for width to be correct*/
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--ink-3);
+    transition: color .18s var(--ease);
 }
 
+#icons-container a:hover{
+    color: var(--ink);
+}
+
+.link-icon{
+    width: 18px;
+    height: 18px;
+    flex: none;
+}
+
+/* Portrait */
+
 .self-image{
-    width: 60%;
+    width: 100%;
     height: auto;
-    border-radius: 2.5rem;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--line);
+}
+
+.affiliation{
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--line);
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: var(--ink-3);
+}
+
+.affiliation img{
+    width: 34px;
+    height: auto;
+    flex: none;
+    opacity: .85;
 }
 
 #mobile-img{
     display: none;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 900px){
     #main-page-container{
-        display: grid;
+        gap: 3rem;
+    }
+}
+
+@media (max-width: 780px){
+    #main-page-container{
         grid-template-columns: 1fr;
-    }
-
-    #name-header{
-        font-size: 3rem;
-    }
-
-    .self-image{
-        width: 70vw;
-        height: auto;
-        margin-top: 2.5rem;
-    }
-
-    .description{
-        width: 80%;
-    }
-
-    .link-icon{
-        width: 40%;
-    }
-
-    .main-page-panel{
-        justify-content: start;
+        gap: 0;
     }
 
     #desktop-only-panel{
@@ -101,5 +140,14 @@
 
     #mobile-img{
         display: block;
+        width: 148px;
+        aspect-ratio: 1 / 1;
+        border-radius: 50%;
+        margin-bottom: 1.75rem;
+    }
+
+    .description,
+    .description:first-of-type{
+        max-width: none;
     }
 }

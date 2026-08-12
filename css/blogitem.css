@@ -1,156 +1,221 @@
-.return-button{
-    font-size: 1.5rem;
+/* ==========================================================================
+   Blog article — standalone stylesheet (mirrors the tokens in general.css)
+   ========================================================================== */
+
+:root{
+    --bg:            #ffffff;
+    --bg-subtle:     #fafafa;
+    --ink:           #14161a;
+    --ink-2:         #3f444d;
+    --ink-3:         #767b85;
+    --line:          #e8e9ec;
+    --line-strong:   #d3d5da;
+    --accent:        #1f4fd8;
+    --radius:        10px;
+    --measure:       72ch;
+    --ease:          cubic-bezier(.2, .6, .3, 1);
 }
 
-.return-button:visited{
-    color: blue;
+*,
+*::before,
+*::after{
+    box-sizing: border-box;
 }
 
 body{
-    margin: 2rem 10rem;
-    font-family: 'Roboto', serif;
-    background-color: rgb(239, 239, 239);
+    margin: 0 auto;
+    padding: 3rem 1.5rem 6rem;
+    max-width: 760px;
+    background-color: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
+
+/* ---------- back link ---------- */
+
+.return-button,
+.return-button:visited{
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.875rem;
+    color: var(--ink-3);
+    text-decoration: none;
+    transition: color .18s var(--ease);
+}
+
+.return-button::before{
+    content: '\2190';
+}
+
+.return-button:hover{
+    color: var(--ink);
+}
+
+/* ---------- headings ---------- */
+
+h1, h2, h3{
+    line-height: 1.2;
+    letter-spacing: -0.021em;
+    font-weight: 600;
+    text-wrap: balance;
+}
+
+h1{
+    margin: 2rem 0 3rem;
+    font-size: clamp(2rem, 5vw, 2.75rem);
+    letter-spacing: -0.03em;
+}
+
+h2{
+    margin: 4rem 0 1rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--line);
+    font-size: 1.6rem;
+}
+
+h3{
+    margin: 2.5rem 0 0.75rem;
+    font-size: 1.2rem;
+}
+
+/* ---------- body copy ---------- */
 
 .blog-content{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    color: #424141;
-    font-size: 1.4rem;
+    color: var(--ink-2);
 }
 
-.blog-content > p{
-    width: 100%;
-    text-align: left;
+.blog-content > p,
+.blog-content li{
+    margin: 1.15rem 0;
 }
+
+.blog-content b,
+.blog-content strong{
+    color: var(--ink);
+    font-weight: 600;
+}
+
+.blog-content a,
+.blog-content a:visited{
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: var(--line-strong);
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+    transition: color .18s var(--ease), text-decoration-color .18s var(--ease);
+}
+
+.blog-content a:hover{
+    color: var(--accent);
+    text-decoration-color: var(--accent);
+}
+
+.blog-content ol,
+.blog-content ul{
+    padding-left: 1.4rem;
+}
+
+.blog-content li::marker{
+    color: var(--ink-3);
+}
+
+/* ---------- table of contents ---------- */
+
+#diffusion-chapters-list{
+    margin: 0 0 3rem;
+    padding: 1.5rem 1.5rem 1.5rem 2.75rem;
+    background: var(--bg-subtle);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+}
+
+#diffusion-chapters-list li{
+    margin: 0.35rem 0;
+    font-weight: 500;
+}
+
+#diffusion-chapters-list li a,
+#diffusion-chapters-list li a:visited{
+    text-decoration: none;
+}
+
+/* ---------- figures ---------- */
 
 .blog-image-container{
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: 3rem;
+    margin: 3rem 0;
 }
 
 .blog-image{
-    width: 70%;
-    margin-bottom: 0.25rem;
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
 }
 
 .blog-image-desc{
-    width: 50%;
-    font-size: 1rem;
-    margin-top: 0.25rem;
+    max-width: 90%;
+    margin: 0.85rem 0 0;
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: var(--ink-3);
     text-align: center;
 }
 
-#diffusion-chapters-list{
-    width: 100%;
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-}
-
-#diffusion-chapters-list li{
-    font-weight: bold;
-    margin-bottom: 0.4rem;
-}
-
-#diffusion-chapters-list li a:visited{
-    color: blue;
-}
-
-.scrollable-equation{
-}
-
 #img-score-path{
-    height: 40vh;
+    max-height: 40vh;
     width: auto;
 }
 
 #img-yang-blog{
-    width: 40vw;
-    height: auto;
+    width: 75%;
 }
 
 #img-forward{
-    width: 90%;
-    height: auto;
+    width: 100%;
+}
+
+/* ---------- equations ---------- */
+
+.scrollable-equation{
+    overflow-x: auto;
+    max-width: 100%;
+    padding: 0.25rem 0;
 }
 
 .mobile-note{
     display: none;
-    color: rgb(225, 57, 57);
+    font-size: 0.875rem;
+    color: var(--ink-3);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 700px){
+    body{
+        padding: 2rem 1.25rem 4rem;
+        font-size: 16px;
+    }
+
     .mobile-note{
         display: block;
-        color: rgb(225, 57, 57);
     }
 
-    body{
-        margin: 5vh 8vw;
-        font-family: 'Roboto', serif;
-        background-color: rgb(239, 239, 239);
+    h2{
+        margin-top: 3rem;
+        font-size: 1.35rem;
     }
 
-    .blog-content{
-        font-size: 1rem;
-    }
-
-    .blog-image-container{
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin: 0;
-    }
-
-    .blog-image{
-        width: 90%;
-        margin-bottom: 0.25rem;
-    }
-
-    .blog-image-desc{
-        width: 50%;
-        font-size: 1rem;
-        margin-top: 0.25rem;
-        text-align: center;
-    }
-
-    .scrollable-equation{
-        overflow-x: scroll;
-        max-width: 100%;
-    }
-
-    #diffusion-chapters-list{
-        width: 100%;
-        display: flex;
-        align-items: start;
-        flex-direction: column;
-    }
-
-    #img-score-path{
-        width: 70vw;
-        height: auto;
-    }
-
-    #img-yang-blog{
-        width: 80vw;
-        height: auto;
-    }
-
+    #img-score-path,
+    #img-yang-blog,
     #img-forward{
         width: 100%;
+        max-height: none;
         height: auto;
     }
-
-    .blog-image-desc{
-        width: 80%;
-        font-size: 0.8rem;
-        margin-top: 0.25rem;
-        text-align: center;
-    }
-
 }
