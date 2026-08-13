@@ -31,7 +31,13 @@
     transform: scale(1.04);
 }
 
+/* Caption splits into description (left) and date (right). Baseline
+   alignment keeps the date level with the first line of a wrapped caption. */
 .photo-description{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
     margin-top: 0.75rem;
     font-size: 0.875rem;
     line-height: 1.5;
@@ -41,6 +47,15 @@
 .photo-description i{
     color: var(--ink-2);
     font-style: italic;
+}
+
+.photo-date{
+    flex: none;
+    font-size: 0.78rem;
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
 }
 
 @media (max-width: 780px){
