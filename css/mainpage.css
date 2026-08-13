@@ -72,9 +72,9 @@
 #icons-container a{
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-    color: var(--ink-3);
+    gap: 0.55rem;
+    font-size: 0.95rem;
+    color: var(--ink-2);
     transition: color .18s var(--ease);
 }
 
@@ -82,10 +82,31 @@
     color: var(--ink);
 }
 
+/* The icon carries the brand colour; the label stays in the page ink so the
+   row doesn't turn into three competing blocks of colour. */
 .link-icon{
-    width: 18px;
-    height: 18px;
+    width: 24px;
+    height: 24px;
     flex: none;
+    color: var(--brand);
+    transition: transform .18s var(--ease);
+}
+
+#icons-container a:hover .link-icon{
+    transform: translateY(-2px);
+}
+
+.social-github{
+    --brand: #181717;
+}
+
+.social-linkedin{
+    --brand: #0A66C2;
+}
+
+/* no brand mark for plain email — kept neutral rather than borrowing one */
+.social-email{
+    --brand: var(--ink-2);
 }
 
 /* Portrait */
@@ -122,9 +143,217 @@
     display: none;
 }
 
+/* ---------- github contribution graph ---------- */
+
+#contributions{
+    --cell: 12px;
+    --cell-gap: 3px;
+
+    /* Site palette rather than GitHub green, so it sits with the rest of the
+       page. Level 0 stays neutral grey — an empty day isn't "a little blue". */
+    --contrib-0: #ebedf0;
+    --contrib-1: #c7d4f7;
+    --contrib-2: #8fa9ef;
+    --contrib-3: #4f79e4;
+    --contrib-4: #1f4fd8;
+
+    margin-top: 4.5rem;
+    padding-top: 3rem;
+    border-top: 1px solid var(--line);
+}
+
+#contributions[hidden]{
+    display: none;
+}
+
+.contrib-head{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.contrib-head h2{
+    font-size: 1.2rem;
+}
+
+#contrib-total{
+    margin-top: 0.3rem;
+    font-size: 0.9rem;
+    color: var(--ink-3);
+}
+
+.contrib-layout{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 300px);
+    gap: 3rem;
+    align-items: start;
+}
+
+/* both tracks must be allowed to shrink, or the 790px graph pushes the whole
+   page wider than the viewport instead of scrolling inside its own box */
+.contrib-layout > *{
+    min-width: 0;
+}
+
+/* the graph is ~790px wide at full size, so it scrolls rather than squashes */
+.contrib-scroll{
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.5rem;
+}
+
+/* ---------- stats panel ---------- */
+
+.gh-stat-list{
+    margin: 0;
+}
+
+.gh-stat{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.6rem 0;
+    border-top: 1px solid var(--line);
+    font-size: 0.875rem;
+}
+
+.gh-stat:first-child{
+    border-top: 0;
+    padding-top: 0;
+}
+
+.gh-stat dt{
+    color: var(--ink-3);
+}
+
+.gh-stat dd{
+    margin: 0;
+    font-weight: 600;
+    color: var(--ink);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.gh-langs{
+    margin-top: 1.75rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+}
+
+.lang-bar{
+    display: flex;
+    height: 8px;
+    margin-top: 0.7rem;
+    background: var(--line);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.lang-bar i{
+    height: 100%;
+    background: var(--lang, var(--line-strong));
+}
+
+.lang-legend{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.9rem;
+    list-style: none;
+    margin: 0.85rem 0 0;
+    padding: 0;
+    font-size: 0.78rem;
+    color: var(--ink-3);
+}
+
+.lang-legend li{
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.contrib-months,
+.contrib-grid{
+    grid-template-columns: repeat(var(--weeks, 53), var(--cell));
+    gap: var(--cell-gap);
+}
+
+.contrib-months{
+    display: grid;
+    width: max-content;
+    margin-bottom: 0.4rem;
+    font-size: 0.7rem;
+    line-height: 1;
+    color: var(--ink-3);
+}
+
+.contrib-months span{
+    grid-row: 1;
+    white-space: nowrap;
+}
+
+.contrib-grid{
+    display: grid;
+    grid-template-rows: repeat(7, var(--cell));
+    grid-auto-flow: column;
+    width: max-content;
+}
+
+.contrib-cell{
+    width: var(--cell);
+    height: var(--cell);
+    border-radius: 2px;
+    background: var(--contrib-0);
+}
+
+.contrib-cell[data-level="1"]{ background: var(--contrib-1); }
+.contrib-cell[data-level="2"]{ background: var(--contrib-2); }
+.contrib-cell[data-level="3"]{ background: var(--contrib-3); }
+.contrib-cell[data-level="4"]{ background: var(--contrib-4); }
+
+.contrib-cell.is-blank{
+    background: transparent;
+}
+
+/* sits outside the scroll box, so it stays put while the graph scrolls */
+.contrib-legend{
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.3rem;
+    margin-top: 0.75rem;
+    font-size: 0.72rem;
+    color: var(--ink-3);
+}
+
+.contrib-legend span:first-child{
+    margin-right: 0.15rem;
+}
+
+.contrib-legend span:last-child{
+    margin-left: 0.15rem;
+}
+
 @media (max-width: 900px){
     #main-page-container{
         gap: 3rem;
+    }
+}
+
+/* stats drop below the graph rather than beside it */
+@media (max-width: 1100px){
+    .contrib-layout{
+        grid-template-columns: minmax(0, 1fr);
+        gap: 2rem;
+    }
+
+    .gh-stats{
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--line);
     }
 }
 
@@ -149,5 +378,19 @@
     .description,
     .description:first-of-type{
         max-width: none;
+    }
+
+    /* smaller cells so a year fits in ~630px instead of ~790px — still wider
+       than a phone, but a shorter swipe to reach the current week */
+    #contributions{
+        --cell: 10px;
+        --cell-gap: 2px;
+
+        margin-top: 3rem;
+        padding-top: 2.5rem;
+    }
+
+    .contrib-legend{
+        justify-content: flex-start;
     }
 }
